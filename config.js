@@ -1,5 +1,6 @@
 // Public configuration only. Never put passwords, tokens, or API secrets here.
-// After deploying the SonicStriker backend, enter its HTTPS URL below.
+// This preview uses the shared backend's isolated SonicStriker route.
+// Activate this configuration only after the combined backend is deployed.
 window.SONICSTRIKER_CONFIG = Object.freeze({
-  backendUrl: ""
+  backendUrl: "https://myapp872.wisp.uno/sonicstriker"
 });
