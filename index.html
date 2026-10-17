@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#080d0a">
+  <title>SonicStriker — Football, controlled by you</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <a class="brand" href="#" aria-label="SonicStriker home"><span class="brand-mark">S</span><span>SONIC<span class="accent">STRIKER</span><small>FOOTBALL LAB</small></span></a>
+      <div class="nav-label">MAIN MENU</div>
+      <button class="nav-btn active" data-view="home"><span>⌂</span> Dashboard</button>
+      <button class="nav-btn" data-view="match"><span>⚽</span> Play Match</button>
+      <button class="nav-btn" data-view="squad"><span>▦</span> My Squad</button>
+      <button class="nav-btn" data-view="career"><span>↗</span> Career</button>
+      <button class="nav-btn" data-view="online"><span>◎</span> Online Servers</button>
+      <button class="nav-btn" data-view="youtube"><span>▷</span> YouTube Area</button>
+      <div class="sidebar-bottom"><span class="status-dot"></span><span id="serverStatus">Server not connected</span><small>SONICSTRIKER BUILD 0.1</small></div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar"><button class="mobile-menu" id="menuToggle" aria-label="Open menu">☰</button><div><div class="eyebrow">YOUR PITCH. YOUR SOUND. YOUR LEGACY.</div><h1 id="pageTitle">DASHBOARD</h1></div><div class="top-stats"><div class="coin-pill">◆ <span id="coinCount">500</span> <small>COINS</small></div><div class="user-chip"><span class="avatar">GK</span><span><b>Rookie</b><small>ACADEMY PLAYER</small></span></div></div></header>
+
+      <section class="view active" id="view-home">
+        <div class="hero-panel"><div class="hero-copy"><span class="pill">SEASON 01 · RISE UP</span><h2>OWN THE<br><span class="accent">GAME.</span></h2><p>Build your squad. Hear the whistle. Make every touch count.</p><div class="hero-actions"><button class="primary-btn" data-go="match">▶ START MATCH</button><button class="secondary-btn" data-go="squad">BUILD YOUR SQUAD</button></div></div><div class="hero-art" aria-hidden="true"><div class="orb"></div><div class="hero-ball">⚽</div><div class="sound-wave wave-one"></div><div class="sound-wave wave-two"></div><span class="art-label">PLAY<br>LOUD.</span></div></div>
+        <div class="section-heading"><div><span class="eyebrow">YOUR JOURNEY STARTS HERE</span><h2>COMMAND CENTRE</h2></div><span class="live-tag"><i></i> PRE-SEASON</span></div>
+        <div class="dashboard-grid"><button class="feature-card match-card" data-go="match"><span class="feature-icon">⚽</span><span class="card-kicker">ON THE PITCH</span><strong>Quick Match</strong><small>Touch controls + voice commands</small><span class="card-arrow">↗</span></button><button class="feature-card squad-card" data-go="squad"><span class="feature-icon">▦</span><span class="card-kicker">BUILD YOUR XI</span><strong>Squad Builder</strong><small>Choose positions and grow your OVR</small><span class="card-arrow">↗</span></button><button class="feature-card career-card" data-go="career"><span class="feature-icon">♜</span><span class="card-kicker">EARN YOUR PLACE</span><strong>Career Mode</strong><small>Play, win and earn coins</small><span class="card-arrow">↗</span></button></div>
+        <div class="section-heading"><div><span class="eyebrow">SQUAD OVERVIEW</span><h2>YOUR STARTING XI</h2></div><button class="text-btn" data-go="squad">EDIT SQUAD ↗</button></div>
+        <div class="overview-strip"><div class="ovr-box"><small>TEAM OVR</small><strong id="teamOvr">62</strong><span>ACADEMY</span></div><div class="mini-pitch" id="miniPitch"><span class="mini-player p1">GK</span><span class="mini-player p2">CB</span><span class="mini-player p3">CM</span><span class="mini-player p4">ST</span></div><div class="overview-note"><strong>Every legend starts somewhere.</strong><p>Play matches to earn coins and unlock better players.</p><button class="primary-btn small" data-go="match">PLAY NOW</button></div></div>
+      </section>
+
+      <section class="view" id="view-match">
+        <div class="section-heading"><div><span class="eyebrow">MATCH ENGINE · PROTOTYPE</span><h2>QUICK MATCH</h2></div><span class="live-tag"><i></i> LOCAL PLAY</span></div>
+        <div class="match-layout"><div class="pitch-wrap"><div class="scoreboard"><span>SONIC FC</span><strong><b id="homeScore">0</b> — <b id="awayScore">0</b></strong><span>RIVAL XI</span><small id="matchClock">00:00</small></div><canvas id="gameCanvas" aria-label="Playable top-down football match"></canvas><div class="pitch-hint" id="pitchHint">Tap a direction or use the joystick to move. Get near the ball, then PASS or SHOOT.</div></div>
+        <aside class="match-controls"><h3>MATCH CONTROLS</h3><div class="control-row"><button class="action-btn" id="passBtn">↗ <span>PASS</span></button><button class="action-btn" id="shootBtn">◉ <span>SHOOT</span></button></div><button class="action-btn full" id="switchBtn">⇄ SWITCH PLAYER</button><div class="voice-panel"><span class="eyebrow">VOICE COMMANDS</span><p>Say <b>“pass”</b>, <b>“shoot”</b>, <b>“through ball”</b> or <b>“switch player”</b>.</p><button class="primary-btn full" id="voiceBtn">🎙 ENABLE VOICE</button><small id="voiceStatus">Voice support depends on your browser and microphone permission.</small></div><div class="touch-panel"><span class="eyebrow">TOUCH JOYSTICK</span><div class="joystick" id="joystick"><div class="joy-knob" id="joyKnob"></div></div><small>Drag the centre dot to move.</small></div><button class="secondary-btn full" id="startMatchBtn">START / RESTART MATCH</button><button class="text-btn full" data-go="home">← BACK TO DASHBOARD</button></aside></div>
+      </section>
+
+      <section class="view" id="view-squad"><div class="section-heading"><div><span class="eyebrow">YOUR PLAYERS · YOUR TACTICS</span><h2>SQUAD BUILDER</h2></div><span class="live-tag">TEAM OVR <b id="squadOvr">62</b></span></div><div class="squad-summary"><div><small>AVAILABLE COINS</small><strong>◆ <span id="squadCoins">500</span></strong></div><div><small>PLAYERS OWNED</small><strong id="ownedCount">5</strong></div><div><small>FORMATION</small><strong>4–3–3</strong></div></div><div class="squad-grid" id="squadGrid"></div><div class="section-heading"><div><span class="eyebrow">SCOUTING MARKET</span><h2>COLLECT PLAYERS</h2></div><span class="eyebrow">EARN COINS BY PLAYING</span></div><div class="market-grid" id="marketGrid"></div><p class="fine-print">Prototype note: player names and ratings are sample game data, not official licensed player cards.</p></section>
+
+      <section class="view" id="view-career"><div class="section-heading"><div><span class="eyebrow">THE ROAD TO GLORY</span><h2>CAREER MODE</h2></div><span class="live-tag">SEASON 01</span></div><div class="career-hero"><span class="eyebrow">ACADEMY DIVISION</span><h2>Prove it on the pitch.</h2><p>Win local matches, earn coins and build a stronger starting XI.</p><div class="career-stats"><div><small>WINS</small><b id="careerWins">0</b></div><div><small>GOALS</small><b id="careerGoals">0</b></div><div><small>COINS EARNED</small><b id="careerEarned">0</b></div></div><button class="primary-btn" data-go="match">PLAY NEXT MATCH ↗</button></div><div class="notice-card"><b>Career progression</b><p>This prototype saves your local squad and career stats in this browser. Shared cloud saves will require a connected backend.</p></div></section>
+
+      <section class="view" id="view-online"><div class="section-heading"><div><span class="eyebrow">MULTIPLAYER HUB</span><h2>ONLINE SERVERS</h2></div><span class="live-tag"><i></i> <span id="onlineBadge">CHECKING</span></span></div><div class="server-panel"><div class="server-symbol">◎</div><h2>CONNECT YOUR SERVER</h2><p>Set a backend URL to check its health. A health check alone does not mean real-time multiplayer is ready.</p><label for="serverUrl">Backend URL</label><input id="serverUrl" type="url" placeholder="https://your-server.example.com"><div class="server-actions"><button class="primary-btn" id="connectServerBtn">CHECK CONNECTION</button><button class="secondary-btn" id="saveServerBtn">SAVE URL</button></div><p id="serverMessage" class="server-message">No server URL configured.</p></div><div class="notice-card"><b>Multiplayer status</b><p>Live matches need server-side matchmaking and synchronized player state. This starter includes the connection check only; it does not claim live online play is active.</p></div></section>
+
+      <section class="view" id="view-youtube"><div class="section-heading"><div><span class="eyebrow">WATCH · LEARN · REPLAY</span><h2>YOUTUBE AREA</h2></div><span class="live-tag">VIDEO HUB</span></div><div class="youtube-panel"><div class="youtube-mark">▶</div><h2>FOOTBALL VIDEO ZONE</h2><p>Add a public YouTube video ID to embed a video here. Some videos block embedding.</p><label for="youtubeId">YouTube video ID or URL</label><input id="youtubeId" type="text" placeholder="e.g. dQw4w9WgXcQ"><button class="primary-btn" id="loadVideoBtn">LOAD VIDEO</button><div class="video-frame" id="videoFrame"><div class="video-placeholder">YOUR VIDEO WILL APPEAR HERE</div></div><small class="muted">Access approvals and owner-only controls are not connected in this standalone starter. Do not enter passwords or private keys here.</small></div></section>
+
+      <footer><span>SONICSTRIKER <b>⚽</b></span><span>BUILT FOR THE LOVE OF THE GAME</span></footer>
+    </main>
+  </div>
+  <script src="script.js"></script>
+</body>
+</html>
