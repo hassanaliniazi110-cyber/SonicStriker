@@ -1,0 +1,14 @@
+{
+  "name": "sonicstriker",
+  "version": "0.1.0",
+  "private": true,
+  "description": "SonicStriker football game starter backend",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.21.2"
+  }
+}
