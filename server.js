@@ -136,9 +136,9 @@ app.get("/api/youtube/access", auth, (req, res) => {
     isAdmin
   });
   // Safe diagnostics for the signed-in player; never disclose the configured owner-ID list.
-  const allowed = youtubeIsApproved(playerId);
+  const allowed = isAdmin || youtubeIsApproved(playerId);
   // A non-owner approval is a one-entry pass: consume it on entry so it cannot authorize a later visit.
-  if (allowed && youtubeAccessData.approved.includes(playerId)) {
+  if (!isAdmin && allowed && youtubeAccessData.approved.includes(playerId)) {
     youtubeAccessData.approved = youtubeAccessData.approved.filter(id => id !== playerId);
     saveYoutubeAccess();
   }
