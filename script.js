@@ -18,9 +18,35 @@
     {id:"st2",name:"Power Finisher",pos:"ST",ovr:74,cost:500,pace:74,skill:"Shooting",owned:false},
     {id:"rb",name:"Rapid Rightback",pos:"RB",ovr:66,cost:210,pace:78,skill:"Speed",owned:false}
   ];
-  let players = saved("players", basePlayers);
-  // Keep newly added sample cards available if the data list is updated later.
-  basePlayers.forEach(p => { if (!players.some(x => x.id === p.id)) players.push(p); });
+  const positions = ["GK","CB","LB","RB","LWB","RWB","CDM","CM","CAM","LM","RM","LW","RW","CF","ST"];
+  const nameA = ["Thunder","Sonic","Neon","Blaze","Echo","Nova","Storm","Vortex","Pulse","Comet","Shadow","Rapid","Pixel","Phantom","Orbit","Turbo","Frost","Solar","Rogue","Velocity","Prism","Falcon","Rhythm","Titan","Aero","Cobalt","Midnight","Rocket","Voltage","Wild"];
+  const nameB = ["Striker","Maestro","Wall","Winger","Engine","Finisher","Playmaker","Guardian","Sprinter","Artist","Captain","Ace","Creator","Sweeper","Hunter","Wizard","Sentinel","Dribbler","Anchor","Ranger","Falcon","Magician","Commander","Dynamo","Sniper","Architect","Glider","Breaker","Keeper","Pioneer"];
+  const tierNames = ["Rising","Prime","Elite","Icon","Ultimate"];
+  const generatedPlayers = Array.from({length:1200},(_,i)=>{
+    const n=i+1, tier=tierNames[Math.min(4,Math.floor((n-1)/240))];
+    const ovr=58+((n*17+Math.floor(n/9)*7)%42);
+    const pos=positions[(n*7+Math.floor(n/11))%positions.length];
+    const pace=42+((n*13)%58);
+    return {id:"SS-GEN-"+String(n).padStart(4,"0"),name:nameA[(n*3)%nameA.length]+" "+nameB[(n*7)%nameB.length]+" "+String(Math.floor((n-1)/30)+1),pos,ovr,cost:Math.max(180,ovr*10),pace,skill:["Pace","Passing","Finishing","Reflexes","Tackling","Vision","Dribbling","Strength"][(n*5)%8],tier,version:tier,owned:false};
+  });
+  const catalogPlayers = [...basePlayers,...generatedPlayers];
+  let players = saved("players", catalogPlayers);
+  catalogPlayers.forEach(p => { if (!players.some(x => x.id === p.id)) players.push(p); });
+  const formations = {
+    "4-3-3":["GK","LB","CB","CB","RB","CM","CM","CM","LW","ST","RW"],
+    "4-4-2":["GK","LB","CB","CB","RB","LM","CM","CM","RM","ST","ST"],
+    "4-2-3-1":["GK","LB","CB","CB","RB","CDM","CDM","LW","CAM","RW","ST"],
+    "3-5-2":["GK","CB","CB","CB","LWB","CDM","CM","CM","RWB","ST","ST"],
+    "3-4-3":["GK","CB","CB","CB","LM","CM","CM","RM","LW","ST","RW"],
+    "5-3-2":["GK","LWB","CB","CB","CB","RWB","CM","CM","CAM","ST","ST"],
+    "4-1-2-1-2":["GK","LB","CB","CB","RB","CDM","CM","CM","CAM","ST","ST"],
+    "4-3-2-1":["GK","LB","CB","CB","RB","CM","CDM","CM","CAM","CAM","ST"],
+    "5-2-3":["GK","LWB","CB","CB","CB","RWB","CM","CM","LW","ST","RW"],
+    "4-5-1":["GK","LB","CB","CB","RB","LM","CM","CDM","CM","RM","ST"]
+  };
+  let formation = saved("formation","4-3-3");
+  let selectedMode = "quick";
+  let marketPage = 0;
   let coins = saved("coins",500), wins = saved("wins",0), goals = saved("goals",0), earned = saved("earned",0);
   let match = {running:false, seconds:0, home:0, away:0, lastGoal:0, frame:0, x:0.5, y:0.68, ballX:0.5, ballY:0.51, ballVx:0, ballVy:0, direction:{x:0,y:0}, player:0};
   let canvas, ctx, canvasW=700, canvasH=430, anim=0, timer=null, recognition=null;
@@ -35,21 +61,33 @@
     if($("#careerGoals"))$("#careerGoals").textContent=goals;
     if($("#careerEarned"))$("#careerEarned").textContent=earned;
     renderMiniPitch();
+    const form=$("#formationSelect");if(form)form.value=formation;
   }
-  function renderMiniPitch(){const pitch=$("#miniPitch");if(!pitch)return;pitch.innerHTML="";const labels=["GK","CB","CB","LB","RB","CM","CM","CAM","LW","ST","RW"];labels.forEach((label,i)=>{const el=document.createElement("span");el.className="mini-player";el.textContent=label;el.style.left=(i===0?7:i<5?18+(i-1)*13:i<8?40+(i-5)*10:68+(i-8)*12)+"%";el.style.top=(i===0?38:i<5?18+(i%2)*37:i<8?20+(i%2)*45:22+(i%2)*35)+"%";pitch.appendChild(el);});}
+  function renderMiniPitch(){const pitch=$("#miniPitch");if(!pitch)return;pitch.innerHTML="";const labels=formations[formation]||formations["4-3-3"];const coords=[[50,83],[18,68],[39,72],[61,72],[82,68],[25,49],[43,54],[57,54],[75,49],[38,29],[62,29]];labels.forEach((label,i)=>{const el=document.createElement("span");el.className="mini-player";el.textContent=label;el.style.left=coords[i][0]+"%";el.style.top=coords[i][1]+"%";pitch.appendChild(el);});const form=$("#formationSelect");if(form)form.value=formation;}
   function renderSquad(){const grid=$("#squadGrid"),market=$("#marketGrid");if(!grid||!market)return;grid.innerHTML="";market.innerHTML="";
     players.filter(p=>p.owned).forEach(p=>grid.appendChild(playerCard(p,true)));
-    players.filter(p=>!p.owned).forEach(p=>market.appendChild(playerCard(p,false)));
+    const query=($("#playerSearch")?.value||"").trim().toLowerCase(),pos=$("#positionFilter")?.value||"ALL",tier=$("#tierFilter")?.value||"ALL";
+    const available=players.filter(p=>!p.owned&&(!query||p.name.toLowerCase().includes(query)||p.id.toLowerCase().includes(query))&&(pos==="ALL"||p.pos===pos)&&(tier==="ALL"||(p.tier||"Academy")===tier));
+    const pages=available.slice(0,(marketPage+1)*24);pages.forEach(p=>market.appendChild(playerCard(p,false)));
+    const count=$("#marketCount");if(count)count.textContent="Showing "+pages.length+" of "+available.length+" available · "+players.length+" total cards";
+    const more=$("#loadMorePlayers");if(more)more.hidden=pages.length>=available.length;
     updateStats();
   }
-  function playerCard(p,isOwned){const card=document.createElement("article");card.className="player-card"+(isOwned?" owned":"");card.innerHTML='<span class="position"></span><span class="rating"></span><h3></h3><p></p><div class="stats"><span></span><span></span></div><button class="'+(isOwned?"secondary-btn":"primary-btn")+'"></button>';
-    $(".position",card).textContent=p.pos;$(".rating",card).textContent=p.ovr;$(".player-card h3",card).textContent=p.name;$(".player-card p",card).textContent=p.skill+" specialist";$$(".stats span",card)[0].textContent="PACE "+p.pace;$$(".stats span",card)[1].textContent=isOwned?"OWNED":"◆ "+p.cost;
-    const btn=$("button",card);btn.textContent=isOwned?"IN YOUR CLUB":"SIGN PLAYER";btn.disabled=isOwned; if(isOwned)btn.style.opacity=".65";else btn.addEventListener("click",()=>{if(coins<p.cost){alert("Not enough coins yet. Play a match to earn more.");return;}coins-=p.cost;p.owned=true;persist();renderSquad();});return card;
+  function playerCard(p,isOwned){const card=document.createElement("article");card.className="player-card"+(isOwned?" owned":"")+" tier-"+String(p.tier||"Academy").toLowerCase().replace(/[^a-z]/g,"");card.innerHTML='<span class="position"></span><span class="rating"></span><span class="card-tier"></span><h3></h3><p></p><div class="stats"><span></span><span></span></div>'+(isOwned?'<label class="position-label">PLAYING POSITION<select class="position-select" aria-label="Change player position"></select></label>':'')+'<button class="'+(isOwned?"secondary-btn":"primary-btn")+'"></button>';
+    $(".position",card).textContent=p.pos;$(".rating",card).textContent=p.ovr;$(".card-tier",card).textContent=(p.tier||"Academy")+" · "+(p.version||"Base");$(".player-card h3",card).textContent=p.name;$(".player-card p",card).textContent=p.skill+" specialist";$$(".stats span",card)[0].textContent="PACE "+p.pace;$$(".stats span",card)[1].textContent=isOwned?(p.ovr>=99?"MAX RATING":"UPGRADE ◆ "+Math.max(100,p.ovr*8)):"◆ "+p.cost;
+    if(isOwned){const select=$(".position-select",card);positions.forEach(pos=>{const option=document.createElement("option");option.value=pos;option.textContent=pos;select.appendChild(option);});select.value=positions.includes(p.pos)?p.pos:"CM";select.addEventListener("change",()=>{p.pos=select.value;persist();renderMiniPitch();});}
+    const btn=$("button",card);
+    if(isOwned){btn.textContent=p.ovr>=99?"MAXED OUT":"UPGRADE +1";btn.disabled=p.ovr>=99;btn.addEventListener("click",()=>{const cost=Math.max(100,p.ovr*8);if(p.ovr>=99)return;if(coins<cost){alert("You need "+cost+" coins to upgrade this card. Play matches to earn more.");return;}coins-=cost;p.ovr=Math.min(99,p.ovr+1);p.pace=Math.min(99,p.pace+1);p.version="Upgraded";persist();renderSquad();});}
+    else btn.addEventListener("click",()=>{if(coins<p.cost){alert("Not enough coins yet. Play a match to earn more.");return;}coins-=p.cost;p.owned=true;persist();renderSquad();});
+    return card;
   }
   function showView(name){const valid=["home","match","squad","career","online","youtube"].includes(name)?name:"home";$$(".view").forEach(v=>v.classList.toggle("active",v.id==="view-"+valid));$$(".nav-btn").forEach(b=>b.classList.toggle("active",b.dataset.view===valid));$("#pageTitle").textContent=valid.toUpperCase()==="HOME"?"DASHBOARD":valid.replace(/^./,c=>c.toUpperCase()).toUpperCase();$(".sidebar").classList.remove("open");if(valid==="match")requestAnimationFrame(resizeCanvas);if(valid==="squad")renderSquad();}
   $$("[data-view]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.view)));
   $$("[data-go]").forEach(b=>b.addEventListener("click",()=>showView(b.dataset.go)));
   $("#menuToggle").addEventListener("click",()=>$(".sidebar").classList.toggle("open"));
+  $("#formationSelect").addEventListener("change",e=>{formation=e.target.value;store("formation",formation);renderMiniPitch();});
+  ["playerSearch","positionFilter","tierFilter"].forEach(id=>$("#"+id).addEventListener(id==="playerSearch"?"input":"change",()=>{marketPage=0;renderSquad();}));
+  $("#loadMorePlayers").addEventListener("click",()=>{marketPage++;renderSquad();});
 
   function resizeCanvas(){if(!canvas)return;const rect=canvas.getBoundingClientRect();if(!rect.width||!rect.height)return;const dpr=Math.min(window.devicePixelRatio||1,2);canvas.width=Math.round(rect.width*dpr);canvas.height=Math.round(rect.height*dpr);canvasW=rect.width;canvasH=rect.height;ctx.setTransform(dpr,0,0,dpr,0,0);draw();}
   function roundedRect(x,y,w,h,r,fill,stroke){ctx.beginPath();ctx.roundRect(x,y,w,h,r);if(fill){ctx.fillStyle=fill;ctx.fill();}if(stroke){ctx.strokeStyle=stroke;ctx.stroke();}}
@@ -69,10 +107,10 @@
     }
   }
   function loop(){match.frame++;draw();anim=requestAnimationFrame(loop);}
-  function startMatch(){match.running=true;match.seconds=0;match.home=0;match.away=0;match.lastGoal=Date.now();match.x=.5;match.y=.68;match.ballX=.5;match.ballY=.51;match.ballVx=0;match.ballVy=0;$("#homeScore").textContent="0";$("#awayScore").textContent="0";$("#matchClock").textContent="00:00";$("#pitchHint").textContent="Match started! Move to the ball, then pass or shoot.";if(timer)clearInterval(timer);timer=setInterval(()=>{if(!match.running)return;match.seconds++;$("#matchClock").textContent=String(Math.floor(match.seconds/60)).padStart(2,"0")+":"+String(match.seconds%60).padStart(2,"0");if(match.seconds>=90)finishMatch();},1000);resizeCanvas();}
+  function startMatch(){match.mode=selectedMode;match.running=true;match.seconds=0;match.home=0;match.away=0;match.lastGoal=Date.now();match.x=.5;match.y=match.mode==="goalkeeper"?.88:.68;match.ballX=.5;match.ballY=match.mode==="penalty"?.27:match.mode==="freekick"?.35:.51;match.ballVx=0;match.ballVy=0;$("#homeScore").textContent="0";$("#awayScore").textContent="0";$("#matchClock").textContent="00:00";const labels={quick:"Full match started! Move to the ball, then pass or shoot.",tournament:"Tournament round started! Win to claim the next round.",penalty:"Penalty shootout! Aim carefully and shoot.",freekick:"Free kick! Line up your shot and strike.",goalkeeper:"Goalkeeper challenge! Move your keeper and use dive controls.",training:"Skill training started. Practice movement, passing and shooting."};$("#pitchHint").textContent=labels[match.mode]||labels.quick;if(timer)clearInterval(timer);timer=setInterval(()=>{if(!match.running)return;match.seconds++;$("#matchClock").textContent=String(Math.floor(match.seconds/60)).padStart(2,"0")+":"+String(match.seconds%60).padStart(2,"0");const limit=match.mode==="penalty"?15:match.mode==="freekick"?30:match.mode==="training"?60:90;if(match.seconds>=limit)finishMatch();},1000);resizeCanvas();}
   function finishMatch(){if(!match.running)return;match.running=false;if(match.home>match.away)wins++;const reward=100+match.home*25;coins+=reward;earned+=reward;persist();$("#pitchHint").textContent="Full time! You earned "+reward+" coins. Start again for another match.";if(timer)clearInterval(timer);timer=null;}
-  function kick(kind){if(!match.running){$("#pitchHint").textContent="Press START / RESTART MATCH first.";return;}const d=Math.hypot(match.x-match.ballX,match.y-match.ballY);if(d>.18){$("#pitchHint").textContent="Move closer to the ball before you "+kind+".";match.direction={x:Math.sign(match.ballX-match.x),y:Math.sign(match.ballY-match.y)};return;}const dx=.5-match.ballX,dy=.08-match.ballY;const mag=Math.hypot(dx,dy)||1;const power=kind==="shoot"?.055:.035;match.ballVx=(dx/mag)*power+(Math.random()-.5)*.008;match.ballVy=(dy/mag)*power;if(kind==="shoot"){if(match.ballY<.25&&Math.random()>.36){match.home++;goals++;$("#homeScore").textContent=match.home;$("#pitchHint").textContent="GOOOAL! Nice finish!";}else{$("#pitchHint").textContent="Shot taken! Chase the rebound.";}}else{$("#pitchHint").textContent=kind==="through ball"?"Through ball played! Run onto it.":"Pass played! Move to the ball.";}}
-  $("#passBtn").addEventListener("click",()=>kick("pass"));$("#shootBtn").addEventListener("click",()=>kick("shoot"));$("#switchBtn").addEventListener("click",()=>{match.player=(match.player+1)%11;const p=[[.5,.84],[.2,.72],[.4,.75],[.6,.75],[.8,.72],[.32,.61],[.5,.65],[.68,.61],[.25,.53],[.5,.55],[.75,.53]][match.player];match.x=p[0];match.y=p[1];$("#pitchHint").textContent="Switched to player "+(match.player+1)+". Move towards the ball.";draw();});$("#startMatchBtn").addEventListener("click",startMatch);
+  function kick(kind){if(!match.running){$("#pitchHint").textContent="Press START / RESTART MATCH first.";return;}if(match.mode==="goalkeeper"){const left=kind==="pass"||kind==="left";match.x=Math.max(.15,Math.min(.85,match.x+(left?-.16:.16)));match.ballX=Math.max(.08,Math.min(.92,match.ballX+(left?-.12:.12)));$("#pitchHint").textContent=Math.random()>.32?"SAVE! Great reaction, keeper.":"The shot got past you — try the other side!";draw();return;}const d=Math.hypot(match.x-match.ballX,match.y-match.ballY);if(d>.18){$("#pitchHint").textContent="Move closer to the ball before you "+kind+".";match.direction={x:Math.sign(match.ballX-match.x),y:Math.sign(match.ballY-match.y)};return;}const dx=.5-match.ballX,dy=.08-match.ballY;const mag=Math.hypot(dx,dy)||1;const power=kind==="shoot"?.055:.035;match.ballVx=(dx/mag)*power+(Math.random()-.5)*.008;match.ballVy=(dy/mag)*power;if(kind==="shoot"){const chance=match.mode==="penalty"?.68:match.mode==="freekick"?.48:match.mode==="training"?.9:.64;if(match.ballY<.4&&Math.random()<chance){match.home++;goals++;$("#homeScore").textContent=match.home;$("#pitchHint").textContent=match.mode==="penalty"?"GOAL! Penalty scored!":match.mode==="freekick"?"WHAT A FREE KICK!":"GOOOAL! Nice finish!";}else{$("#pitchHint").textContent="Shot taken! Chase the rebound.";}}else{$("#pitchHint").textContent=kind==="through ball"?"Through ball played! Run onto it.":"Pass played! Move to the ball.";}}
+  function setMode(mode){selectedMode=mode;$("[data-mode]").forEach(b=>b.classList.toggle("active",b.dataset.mode===mode));const p=$("#passBtn"),s=$("#shootBtn");if(mode==="goalkeeper"){p.innerHTML="↙ <span>DIVE LEFT</span>";s.innerHTML="↘ <span>DIVE RIGHT</span>";}else{p.innerHTML="↗ <span>PASS</span>";s.innerHTML="◉ <span>SHOOT</span>";}$("#pitchHint").textContent="Selected mode: "+mode.replace(/(^|\s)\S/g,m=>m.toUpperCase())+". Press START / RESTART MATCH when ready.";}$("[data-mode]").forEach(b=>b.addEventListener("click",()=>setMode(b.dataset.mode)));$("#passBtn").addEventListener("click",()=>kick("pass"));$("#shootBtn").addEventListener("click",()=>kick("shoot"));$("#switchBtn").addEventListener("click",()=>{match.player=(match.player+1)%11;const p=[[.5,.84],[.2,.72],[.4,.75],[.6,.75],[.8,.72],[.32,.61],[.5,.65],[.68,.61],[.25,.53],[.5,.55],[.75,.53]][match.player];match.x=p[0];match.y=p[1];$("#pitchHint").textContent="Switched to player "+(match.player+1)+". Move towards the ball.";draw();});$("#startMatchBtn").addEventListener("click",startMatch);
   const keyDirections={ArrowUp:[0,-1],w:[0,-1],ArrowDown:[0,1],s:[0,1],ArrowLeft:[-1,0],a:[-1,0],ArrowRight:[1,0],d:[1,0]};
   window.addEventListener("keydown",e=>{if(keyDirections[e.key]){match.direction={x:keyDirections[e.key][0],y:keyDirections[e.key][1]};if($("#view-match").classList.contains("active"))e.preventDefault();}if(e.key===" "&&$("#view-match").classList.contains("active")){e.preventDefault();kick("shoot");}});
   window.addEventListener("keyup",e=>{if(keyDirections[e.key])match.direction={x:0,y:0};});
